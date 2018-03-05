@@ -9,12 +9,12 @@ from   PIL            import Image, ImageMath, ImageFilter, ImageOps
 from   digits_dict import digits_dict
 from   text_dict   import text_dict
 
-SIZE_OF_POSITIVE_IMAGE = (40, 40)
-SIZE_OF_NEGATIVE_IMAGE = (40, 40)
+SIZE_OF_POSITIVE_IMAGE = (150, 150)
+SIZE_OF_NEGATIVE_IMAGE = (150, 150)
 POSITIVE_COUNT         = 1
 NEGATIVE_COUNT         = 10
-BARCODE_IMAGE_W        = 40
-BARCODE_IMAGE_H        = 40
+BARCODE_IMAGE_W        = 90
+BARCODE_IMAGE_H        = 90
 
 def get_digits(bc, barcode_class):
     digits = bc.digits
