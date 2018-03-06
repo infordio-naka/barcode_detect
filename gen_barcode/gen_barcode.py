@@ -9,12 +9,14 @@ from   PIL            import Image, ImageMath, ImageFilter, ImageOps
 from   digits_dict import digits_dict
 from   text_dict   import text_dict
 
-SIZE_OF_POSITIVE_IMAGE = (150, 150)
-SIZE_OF_NEGATIVE_IMAGE = (150, 150)
+NUMBER_OF_POSITIVE     = 21
+NUMBER_OF_NEGATIVE     = 11
+SIZE_OF_POSITIVE_IMAGE = (150, 90)
+SIZE_OF_NEGATIVE_IMAGE = (150, 90)
 POSITIVE_COUNT         = 1
-NEGATIVE_COUNT         = 10
+NEGATIVE_COUNT         = 1
 BARCODE_IMAGE_W        = 90
-BARCODE_IMAGE_H        = 90
+BARCODE_IMAGE_H        = 50
 
 def get_digits(bc, barcode_class):
     digits = bc.digits
@@ -93,11 +95,10 @@ def paste_images(filenames, image_size=(1936, 2730)):
         pos[2:] = list(img.size)
     return pasted_image, positions
 
-def break_barcode(filename):
-    img = Image.open(filename)
+def break_barcode(img):
     if random.random()<0.8:
         img = img.filter(ImageFilter.GaussianBlur(10))
-    img = img.resize([x // 30 for x in img.size]).resize(img.size)
+    # img = img.resize([x // 30 for x in img.size]).resize(img.size)
     if random.random()<0.5:
         img = img.quantize(4)
     if random.random()<0.5:
@@ -133,14 +134,14 @@ if not os.path.isdir(save_path):
     os.makedirs(save_path)
 save_path = save_path+"positive{0}"
 fp        = open("positive.dat", 'w')
-for i in range(7001):
+for i in range(NUMBER_OF_POSITIVE):
     print(i)
     bc, barcode_class = gen_barcode()
     filenames.append(bc.save(save_path.format(i), {"write_text":False}))
     img = resize_image(filenames[-1])
     img.save(save_path.format(i)+".png")
     if i!=0 and i%POSITIVE_COUNT==0:
-        pasted_image, positions = paste_images(filenames, SIZE_OF_POSITIVE_IMAGE) # positions=(x, y, w, h)
+        pasted_image, positions = paste_images(filenames, SIZE_OF_POSITIVE_IMAGE) # positions=>(x, y, w, h)
         pasted_image_name = "images/positive/positive_pasted_image{0}.png".format(int(i/POSITIVE_COUNT)-1)
         pasted_image.save(pasted_image_name)
         text = "{0} {1} ".format(pasted_image_name, len(positions))
@@ -153,35 +154,36 @@ fp.close()
 save_path = "images/negative/"
 if not os.path.isdir(save_path):
     os.makedirs(save_path)
-save_path = save_path+"negative{0}.png"
-dir_path = "/home/naka/workspace/images/"
+save_path = save_path+"negative{0}"
+# dir_path = "/Users/sugiya/workspace/structured-ocr/test/images/"
 fp = open("negative.dat", 'w')
-filenames = os.listdir(dir_path)
-for i in range(5000):
-    print(i)
-    filename = random.choice(filenames)
-    path = os.path.join(dir_path, filename)
-    img  = Image.open(path)
-    img  = img.convert("L")
-    crop_pos = random_crop_position(img, SIZE_OF_NEGATIVE_IMAGE)
-    crop_img = img.crop(crop_pos)
-    crop_img.save(save_path.format(i))
-    fp.write(save_path.format(i)+"\n")
-    
-# negative
-# filenames = []
-# fp        = open("negative.dat", 'w')
-# for i in range(1001):
+# filenames = os.listdir(dir_path)
+# for i in range(20):
 #     print(i)
-#     bc, barcode_class = gen_barcode()
-#     filenames.append(bc.save("images/negative/negative{0}".format(i), {"write_text":False}))
-#     img = break_barcode(filenames[-1])
-#     img.save("images/negative/negative{0}.png".format(i))
-#     if i!=0 and i%COUNT==0:
-#         pasted_image, positions = paste_images(filenames, SIZE_OF_IMAGE) # positions=(x, y, w, h)
-#         pasted_image_name = "images/negative/negative_pasted_image{0}.png".format(int(i/COUNT)-1)
-#         pasted_image.save(pasted_image_name)
-#         text = "{0}\n".format(pasted_image_name)
-#         fp.write(text)
-#         filenames = []
+#     filename = random.choice(filenames)
+#     path = os.path.join(dir_path, filename)
+#     img  = Image.open(path)
+#     img  = img.convert("L")
+#     crop_pos = random_crop_position(img, SIZE_OF_NEGATIVE_IMAGE)
+#     crop_img = img.crop(crop_pos)
+#     crop_img.save(save_path.format(i))
+#     fp.write(save_path.format(i)+"\n")
+
+# negative
+filenames = []
+fp        = open("negative.dat", 'w')
+for i in range(NUMBER_OF_NEGATIVE):
+    print(i)
+    bc, barcode_class = gen_barcode()
+    filenames.append(bc.save(save_path.format(i), {"write_text":False}))
+    img = resize_image(filenames[-1])
+    img = break_barcode(img)
+    img.save(save_path.format(i)+".png")
+    if i!=0 and i%NEGATIVE_COUNT==0:
+        pasted_image, positions = paste_images(filenames, SIZE_OF_NEGATIVE_IMAGE) # positions=>(x, y, w, h)
+        pasted_image_name = "images/negative/negative_pasted_image{0}.png".format(int(i/NEGATIVE_COUNT)-1)
+        pasted_image.save(pasted_image_name)
+        text = "{0}\n".format(pasted_image_name)
+        fp.write(text)
+        filenames = []
 fp.close()
