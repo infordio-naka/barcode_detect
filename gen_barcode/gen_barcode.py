@@ -8,15 +8,16 @@ from   PIL            import Image, ImageMath, ImageFilter, ImageOps
 
 from   digits_dict import digits_dict
 from   text_dict   import text_dict
+from   saltpepper  import saltpepper
 
-NUMBER_OF_POSITIVE     = 21
-NUMBER_OF_NEGATIVE     = 11
-SIZE_OF_POSITIVE_IMAGE = (150, 90)
-SIZE_OF_NEGATIVE_IMAGE = (150, 90)
+NUMBER_OF_POSITIVE     = 30001
+NUMBER_OF_NEGATIVE     = 25001
+SIZE_OF_POSITIVE_IMAGE = (20, 20)
+SIZE_OF_NEGATIVE_IMAGE = (20, 20)
 POSITIVE_COUNT         = 1
 NEGATIVE_COUNT         = 1
-BARCODE_IMAGE_W        = 90
-BARCODE_IMAGE_H        = 50
+BARCODE_IMAGE_W        = 20
+BARCODE_IMAGE_H        = 20
 
 def get_digits(bc, barcode_class):
     digits = bc.digits
@@ -97,10 +98,10 @@ def paste_images(filenames, image_size=(1936, 2730)):
 
 def break_barcode(img):
     if random.random()<0.8:
-        img = img.filter(ImageFilter.GaussianBlur(10))
+        img = img.filter(ImageFilter.GaussianBlur(1))
     # img = img.resize([x // 30 for x in img.size]).resize(img.size)
     if random.random()<0.5:
-        img = img.quantize(4)
+        img = img.quantize(1)
     if random.random()<0.5:
         try:
             img = ImageOps.invert(img)
@@ -108,7 +109,7 @@ def break_barcode(img):
             pass
     if random.random()<0.5:
         try:
-            img = ImageOps.posterize(img, 2)
+            img = ImageOps.posterize(img, 1)
         except NotImplementedError:
             pass
     if random.random()<0.5:
