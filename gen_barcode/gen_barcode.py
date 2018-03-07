@@ -12,12 +12,12 @@ from   saltpepper  import saltpepper
 
 NUMBER_OF_POSITIVE     = 30001
 NUMBER_OF_NEGATIVE     = 25001
-SIZE_OF_POSITIVE_IMAGE = (500, 200)
-SIZE_OF_NEGATIVE_IMAGE = (500, 200)
+SIZE_OF_POSITIVE_IMAGE = (120, 60)
+SIZE_OF_NEGATIVE_IMAGE = (120, 60)
 POSITIVE_COUNT         = 1
 NEGATIVE_COUNT         = 1
-BARCODE_IMAGE_W        = 500
-BARCODE_IMAGE_H        = 200
+BARCODE_IMAGE_W        = 120
+BARCODE_IMAGE_H        = 60
 
 def get_digits(bc, barcode_class):
     digits = bc.digits
@@ -102,8 +102,6 @@ def break_barcode(img):
     # img = img.resize([x // 30 for x in img.size]).resize(img.size)
     if random.random()<0.9:
         img = saltpepper(img)
-    if random.random()<0.5:
-        img = img.quantize(1)
     if random.random()<0.5:
         try:
             img = ImageOps.invert(img)
