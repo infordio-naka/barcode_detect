@@ -10,14 +10,17 @@ from   digits_dict import digits_dict
 from   text_dict   import text_dict
 from   saltpepper  import saltpepper
 
-NUMBER_OF_POSITIVE     = 30001
-NUMBER_OF_NEGATIVE     = 25001
-SIZE_OF_POSITIVE_IMAGE = (120, 60)
-SIZE_OF_NEGATIVE_IMAGE = (120, 60)
-POSITIVE_COUNT         = 1
-NEGATIVE_COUNT         = 1
-BARCODE_IMAGE_W        = 120
-BARCODE_IMAGE_H        = 60
+import xml.etree.ElementTree as ET
+import xml.dom.minidom       as minidom
+
+NUMBER_OF_POSITIVE     = 3001
+NUMBER_OF_NEGATIVE     = 2501
+SIZE_OF_POSITIVE_IMAGE = (1936, 2730)
+SIZE_OF_NEGATIVE_IMAGE = (1936, 2730)
+POSITIVE_COUNT         = 10
+NEGATIVE_COUNT         = 10
+BARCODE_IMAGE_W        = 300
+BARCODE_IMAGE_H        = 150
 
 def get_digits(bc, barcode_class):
     digits = bc.digits
@@ -128,11 +131,61 @@ def random_crop_position(img, crop_size):
     y2 = y1+crop_h
     return (x1, y1, x2, y2)
 
+def export_xml(path):
+    fp  = open(path)
+    fp2 = open("annotations/trainval.txt", "w")
+    for i, l in enumerate(fp):
+        annotation     = ET.Element('annotation')
+        filename       = ET.SubElement(annotation, 'filename')
+        size           = ET.SubElement(annotation, 'size')
+        width          = ET.SubElement(size, 'width')
+        width.text     = "1936"
+        height         = ET.SubElement(size, 'height')
+        height.text    = "2730"
+        depth          = ET.SubElement(size, 'depth')
+        depth.text     = "3"
+
+        l = l.strip().split(' ')
+        filename.text = "positive_pasted_image{0}.jpg".format(i)
+        num_obj= l[1]
+        fp2.write("positive_pasted_image{0} {1}\n".format(i, num_obj))
+        pos    = l[2:]
+        pos = [[int(pos[i]), int(pos[i+1]), int(pos[i])+int(pos[i+2]), int(pos[i+2])+int(pos[i+3])] for i in range(0, len(pos), 4)]
+        for p in pos:
+            obj            = ET.SubElement(annotation, 'object')
+            name           = ET.SubElement(obj, 'name')
+            name.text      = "barcode"
+            pose           = ET.SubElement(obj, 'pose')
+            pose.text      = "Unspecified"
+            truncated      = ET.SubElement(obj, 'truncated')
+            truncated.text = "0"
+            difficult      = ET.SubElement(obj, 'difficult')
+            difficult.text = "0"
+            bndbox         = ET.SubElement(obj, 'bndbox')
+            xmin           = ET.SubElement(bndbox, 'xmin')
+            xmin.text      = str(p[0])
+            ymin           = ET.SubElement(bndbox, 'ymin')
+            ymin.text      = str(p[1])
+            xmax           = ET.SubElement(bndbox, 'xmax')
+            xmax.text      = str(p[2])
+            ymax           = ET.SubElement(bndbox, 'ymax')
+            ymax.text      = str(p[3])
+        string     = ET.tostring(annotation, 'utf-8')
+        pretty_string = minidom.parseString(string).toprettyxml(indent='  ')
+        
+        xml_file = os.path.join("annotations/xmls/positive_pasted_image{0}.xml".format(i))
+        with open(xml_file, 'w') as f:
+            f.write(pretty_string)
+    fp.close()
+    fp2.close()
+
 # positive
 filenames = []
 save_path = "images/positive/"
 if not os.path.isdir(save_path):
     os.makedirs(save_path)
+if not os.path.isdir("train_images"):
+    os.makedirs("train_images")
 save_path = save_path+"positive{0}"
 fp        = open("positive.dat", 'w')
 for i in range(NUMBER_OF_POSITIVE):
@@ -140,11 +193,13 @@ for i in range(NUMBER_OF_POSITIVE):
     bc, barcode_class = gen_barcode()
     filenames.append(bc.save(save_path.format(i), {"write_text":False}))
     img = resize_image(filenames[-1])
-    img.save(save_path.format(i)+".png")
+    img.save(save_path.format(i)+".jpg")
     if i!=0 and i%POSITIVE_COUNT==0:
         pasted_image, positions = paste_images(filenames, SIZE_OF_POSITIVE_IMAGE) # positions=>(x, y, w, h)
-        pasted_image_name = "images/positive/positive_pasted_image{0}.png".format(int(i/POSITIVE_COUNT)-1)
+        pasted_image_name       = "images/positive/positive_pasted_image{0}.jpg".format(int(i/POSITIVE_COUNT)-1)
+        train_pasted_image_name = "train_images/positive_pasted_image{0}.jpg".format(int(i/POSITIVE_COUNT)-1) # for object detection
         pasted_image.save(pasted_image_name)
+        pasted_image.save(train_pasted_image_name)
         text = "{0} {1} ".format(pasted_image_name, len(positions))
         text += " ".join([" ".join([str(pos) for pos in position]) for position in positions])+"\n"
         fp.write(text)
@@ -179,12 +234,16 @@ for i in range(NUMBER_OF_NEGATIVE):
     filenames.append(bc.save(save_path.format(i), {"write_text":False}))
     img = resize_image(filenames[-1])
     img = break_barcode(img)
-    img.save(save_path.format(i)+".png")
+    img.save(save_path.format(i)+".jpg")
     if i!=0 and i%NEGATIVE_COUNT==0:
         pasted_image, positions = paste_images(filenames, SIZE_OF_NEGATIVE_IMAGE) # positions=>(x, y, w, h)
-        pasted_image_name = "images/negative/negative_pasted_image{0}.png".format(int(i/NEGATIVE_COUNT)-1)
+        pasted_image_name = "images/negative/negative_pasted_image{0}.jpg".format(int(i/NEGATIVE_COUNT)-1)
         pasted_image.save(pasted_image_name)
         text = "{0}\n".format(pasted_image_name)
         fp.write(text)
         filenames = []
 fp.close()
+
+if not os.path.isdir("annotations/xmls"):
+    os.makedirs("annotations/xmls")
+export_xml("positive.dat")
