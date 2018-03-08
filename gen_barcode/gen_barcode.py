@@ -146,9 +146,9 @@ def export_xml(path):
         depth.text     = "3"
 
         l = l.strip().split(' ')
-        filename.text = "positive_pasted_image{0}.jpg".format(i)
+        filename.text = "barcode_{0}.jpg".format(i)
         num_obj= l[1]
-        fp2.write("positive_pasted_image{0} {1}\n".format(i, num_obj))
+        fp2.write("barcode_{0} {1}\n".format(i, num_obj))
         pos    = l[2:]
         pos = [[int(pos[i]), int(pos[i+1]), int(pos[i])+int(pos[i+2]), int(pos[i+2])+int(pos[i+3])] for i in range(0, len(pos), 4)]
         for p in pos:
@@ -173,7 +173,7 @@ def export_xml(path):
         string     = ET.tostring(annotation, 'utf-8')
         pretty_string = minidom.parseString(string).toprettyxml(indent='  ')
         
-        xml_file = os.path.join("annotations/xmls/positive_pasted_image{0}.xml".format(i))
+        xml_file = os.path.join("annotations/xmls/barcode_{0}.xml".format(i))
         with open(xml_file, 'w') as f:
             f.write(pretty_string)
     fp.close()
@@ -197,7 +197,7 @@ for i in range(NUMBER_OF_POSITIVE):
     if i!=0 and i%POSITIVE_COUNT==0:
         pasted_image, positions = paste_images(filenames, SIZE_OF_POSITIVE_IMAGE) # positions=>(x, y, w, h)
         pasted_image_name       = "images/positive/positive_pasted_image{0}.jpg".format(int(i/POSITIVE_COUNT)-1)
-        train_pasted_image_name = "train_images/positive_pasted_image{0}.jpg".format(int(i/POSITIVE_COUNT)-1) # for object detection
+        train_pasted_image_name = "train_images/barcode_{0}.jpg".format(int(i/POSITIVE_COUNT)-1) # for object detection
         pasted_image.save(pasted_image_name)
         pasted_image.save(train_pasted_image_name)
         text = "{0} {1} ".format(pasted_image_name, len(positions))
