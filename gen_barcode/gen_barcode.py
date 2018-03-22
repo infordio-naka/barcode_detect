@@ -14,13 +14,23 @@ import xml.etree.ElementTree as ET
 import xml.dom.minidom       as minidom
 
 NUMBER_OF_POSITIVE     = 3001
-NUMBER_OF_NEGATIVE     = 2501
+# NUMBER_OF_POSITIVE     = 2
+NUMBER_OF_NEGATIVE     = 2
 SIZE_OF_POSITIVE_IMAGE = (1936, 2730)
 SIZE_OF_NEGATIVE_IMAGE = (1936, 2730)
-POSITIVE_COUNT         = 10
-NEGATIVE_COUNT         = 10
+# SIZE_OF_POSITIVE_IMAGE = (600,  300)
+# SIZE_OF_NEGATIVE_IMAGE = (600,  300)
+POSITIVE_COUNT         = 1
+NEGATIVE_COUNT         = 1
 BARCODE_IMAGE_W        = 300
 BARCODE_IMAGE_H        = 150
+
+fp = open("learned_models/description.txt", "w")
+fp.write("image_size: {0}\n".format(SIZE_OF_POSITIVE_IMAGE))
+fp.write("barcode_size: ({0}, {1})\n".format(BARCODE_IMAGE_W, BARCODE_IMAGE_H))
+fp.write("n_barcode: {0}\n".format(NUMBER_OF_POSITIVE))
+fp.write("n_barcode_per_image: {0}\n".format(POSITIVE_COUNT))
+fp.close()
 
 def get_digits(bc, barcode_class):
     digits = bc.digits
@@ -93,9 +103,11 @@ def random_positions(n, image_size):
 def paste_images(filenames, image_size=(1936, 2730)):
     pasted_image = Image.new("RGB", image_size, (255, 255, 255))
     positions = random_positions(len(filenames), image_size)
+    # positions = [[0, 0] for i in range(len(filenames))]
     for filename, pos in zip(filenames, positions):
         img = Image.open(filename)
         pasted_image.paste(img, pos)
+        print(filename, pos, img.size)
         pos[2:] = list(img.size)
     return pasted_image, positions
 
@@ -139,9 +151,9 @@ def export_xml(path):
         filename       = ET.SubElement(annotation, 'filename')
         size           = ET.SubElement(annotation, 'size')
         width          = ET.SubElement(size, 'width')
-        width.text     = "1936"
+        width.text     = str(SIZE_OF_POSITIVE_IMAGE[0])
         height         = ET.SubElement(size, 'height')
-        height.text    = "2730"
+        height.text    = str(SIZE_OF_POSITIVE_IMAGE[1])
         depth          = ET.SubElement(size, 'depth')
         depth.text     = "3"
 
@@ -150,7 +162,7 @@ def export_xml(path):
         num_obj= l[1]
         fp2.write("barcode_{0} {1}\n".format(i, num_obj))
         pos    = l[2:]
-        pos = [[int(pos[i]), int(pos[i+1]), int(pos[i])+int(pos[i+2]), int(pos[i+2])+int(pos[i+3])] for i in range(0, len(pos), 4)]
+        pos = [[int(pos[i]), int(pos[i+1]), int(pos[i])+int(pos[i+2]), int(pos[i+1])+int(pos[i+3])] for i in range(0, len(pos), 4)]
         for p in pos:
             obj            = ET.SubElement(annotation, 'object')
             name           = ET.SubElement(obj, 'name')
@@ -193,7 +205,8 @@ for i in range(NUMBER_OF_POSITIVE):
     bc, barcode_class = gen_barcode()
     filenames.append(bc.save(save_path.format(i), {"write_text":False}))
     img = resize_image(filenames[-1])
-    img.save(save_path.format(i)+".jpg")
+    img.save(save_path.format(i)+".png")
+    print(save_path.format(i)+".png", img.size)
     if i!=0 and i%POSITIVE_COUNT==0:
         pasted_image, positions = paste_images(filenames, SIZE_OF_POSITIVE_IMAGE) # positions=>(x, y, w, h)
         pasted_image_name       = "images/positive/positive_pasted_image{0}.jpg".format(int(i/POSITIVE_COUNT)-1)
@@ -206,13 +219,13 @@ for i in range(NUMBER_OF_POSITIVE):
         filenames = []
 fp.close()
 
-# negative
-save_path = "images/negative/"
-if not os.path.isdir(save_path):
-    os.makedirs(save_path)
-save_path = save_path+"negative{0}"
+# negative normal
+# save_path = "images/negative/"
+# if not os.path.isdir(save_path):
+#     os.makedirs(save_path)
+# save_path = save_path+"negative{0}"
 # dir_path = "/Users/sugiya/workspace/structured-ocr/test/images/"
-fp = open("negative.dat", 'w')
+# fp = open("negative.dat", 'w')
 # filenames = os.listdir(dir_path)
 # for i in range(20):
 #     print(i)
@@ -225,24 +238,24 @@ fp = open("negative.dat", 'w')
 #     crop_img.save(save_path.format(i))
 #     fp.write(save_path.format(i)+"\n")
 
-# negative
-filenames = []
-fp        = open("negative.dat", 'w')
-for i in range(NUMBER_OF_NEGATIVE):
-    print(i)
-    bc, barcode_class = gen_barcode()
-    filenames.append(bc.save(save_path.format(i), {"write_text":False}))
-    img = resize_image(filenames[-1])
-    img = break_barcode(img)
-    img.save(save_path.format(i)+".jpg")
-    if i!=0 and i%NEGATIVE_COUNT==0:
-        pasted_image, positions = paste_images(filenames, SIZE_OF_NEGATIVE_IMAGE) # positions=>(x, y, w, h)
-        pasted_image_name = "images/negative/negative_pasted_image{0}.jpg".format(int(i/NEGATIVE_COUNT)-1)
-        pasted_image.save(pasted_image_name)
-        text = "{0}\n".format(pasted_image_name)
-        fp.write(text)
-        filenames = []
-fp.close()
+# negative break_barcode
+# filenames = []
+# fp        = open("negative.dat", 'w')
+# for i in range(NUMBER_OF_NEGATIVE):
+#     print(i)
+#     bc, barcode_class = gen_barcode()
+#     filenames.append(bc.save(save_path.format(i), {"write_text":False}))
+#     img = resize_image(filenames[-1])
+#     img = break_barcode(img)
+#     img.save(save_path.format(i)+".jpg")
+#     if i!=0 and i%NEGATIVE_COUNT==0:
+#         pasted_image, positions = paste_images(filenames, SIZE_OF_NEGATIVE_IMAGE) # positions=>(x, y, w, h)
+#         pasted_image_name = "images/negative/negative_pasted_image{0}.jpg".format(int(i/NEGATIVE_COUNT)-1)
+#         pasted_image.save(pasted_image_name)
+#         text = "{0}\n".format(pasted_image_name)
+#         fp.write(text)
+#         filenames = []
+# fp.close()
 
 if not os.path.isdir("annotations/xmls"):
     os.makedirs("annotations/xmls")
